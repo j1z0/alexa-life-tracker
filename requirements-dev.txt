@@ -1,0 +1,27 @@
+# unit tets
+pytest
+pytest-cov
+pytest-mock
+
+# Build tasks
+invoke
+
+# Packaging
+wheel
+twine
+
+# Syntax checking
+flake8
+
+# For notebooks
+pip==9.0.1
+jupyter
+pandas
+numpy
+matplotlib
+tqdm
+
+# Documentation builder
+# sphinx-autobuild
+# sphinx
+
