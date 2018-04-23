@@ -17,16 +17,16 @@ tests_require = [
 ]
 
 setup(
-    name='sample',
+    name='life_tracker',
     version=open("sample/_version.py").readlines()[-1].split()[-1].strip("\"'"),
-    description='starter project',
+    description='alexa interface to track habbits and todos with fun integrations',
     long_description=README,
-    packages=['sample'],
+    packages=['life_tracker'],
     include_package_data=True,
     zip_safe=False,
-    author='4dn Team at Harvard Medical School',
-    author_email='jeremy_johnson@hms.harvard.edu',
-    url='https://data.4dnucleome.org',
+    author='jeremy johnson',
+    author_email='johnsonjp@gmaicom',
+    url='https://j1z0.org',
     license='MIT',
     install_requires=requires,
     setup_requires=requires,

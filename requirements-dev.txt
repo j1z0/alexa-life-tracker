@@ -25,3 +25,6 @@ tqdm
 # sphinx-autobuild
 # sphinx
 
+# for lambda deploys
+requests
+-e git+https://github.com/j1z0/python-lambda.git#egg=python_lambda

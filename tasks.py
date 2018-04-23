@@ -8,12 +8,30 @@ from invoke import task, run
 import cProfile
 import pstats
 import importlib
+import requests
+import random
+import aws_lambda
 
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
-PROJECT_NAME = 'sample'
+PROJECT_NAME = 'life_tracker'
+POSITIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/positive.txt'
+NEGATIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/negative.txt'
+
+
+def get_random_line_in_gist(url):
+    listing = requests.get(url)
+    return random.choice(listing.text.split("\n"))
+
+
+@task
+def play(ctx, positive=False):
+    type_url = POSITIVE if positive else NEGATIVE
+    # no spaces in url
+    media_url = '%20'.join(get_random_line_in_gist(type_url).split())
+    run("vlc -I rc %s --play-and-exit -q" % (media_url))
 
 
 @contextmanager
@@ -100,9 +118,16 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k=''):
     if last_failing:
         args.append('--lf')
     retcode = pytest.main(args)
+    try:
+        good = True if retcode == 0 else False
+        play(ctx, good)
+    except:  # noqa E722
+        print("install vlc for more exciting test runs...")
+        pass
     if retcode != 0:
         print("test failed exiting")
         sys.exit(retcode)
+    return retcode
 
 
 @task
@@ -123,23 +148,50 @@ def clean(ctx):
     print("Cleaned up.")
 
 
+@contextmanager
+def chdir(dirname=None):
+    curdir = os.getcwd()
+    try:
+        if dirname is not None:
+            os.chdir(dirname)
+            yield
+    finally:
+        os.chdir(curdir)
+
+
 @task
-def deploy(ctx, version=None, local=False):
-    '''clean, run tests, version, tag and push tag to git for publishing to pypi through travis'''
+def deploy(ctx, version=None, no_tests=False):
     print("preparing for deploy...")
-    print("first lets clean everythign up.")
-    clean(ctx)
-    print("now lets make sure the tests pass")
-    test(ctx)
-    print("next get version information")
-    version = update_version(ctx, version)
-    print("then tag the release in git")
-    git_tag(ctx, version, "new production release %s" % (version))
-    print("Build is now triggered for production deployment of %s "
-          "check travis for build status" % (version))
-    if local:
-        publish(ctx)
-    print("Also follow these additional instructions here")
+    print("make sure tests pass")
+    if no_tests is False:
+        if test(ctx) != 0:
+            print("tests need to pass first before deploy")
+            return
+
+    # dist directores are the enemy, clean the all
+    print("cleaning house before deploying")
+    with chdir("./life_tracker/"):
+        clean(ctx)
+
+        print("building lambda package")
+        deploy_lambda_package(ctx, u'life_tracker')
+        # need to clean up all dist, otherwise, installing local package takes forever
+        clean(ctx)
+
+
+@task
+def deploy_lambda_package(ctx, name):
+    # third part tools, should all be tar
+    '''
+    tools_dir = os.path.join(ROOT_DIR, "third_party")
+    bin_dir = os.path.join(ROOT_DIR, "bin")
+
+    for filename in os.listdir(tools_dir):
+        if filename.endswith('.tar'):
+            fullpath = os.path.join(tools_dir, filename)
+            run("tar -xvf %s -C %s" % (fullpath, bin_dir))
+    '''
+    aws_lambda.deploy(os.getcwd(), requirements='../requirements.txt')
 
 
 @task
