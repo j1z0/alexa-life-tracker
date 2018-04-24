@@ -131,6 +131,36 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k=''):
 
 
 @task
+def create_user(ctx, amz_user_id=None, habitica_user=None, habitica_key=None):
+    if amz_user_id is None:
+        amz_user_id = os.environ.get("AMZ_USER_ID")
+    if habitica_user is None:
+        habitica_user = os.environ.get("HABITICA_USER")
+    if habitica_key is None:
+        habitica_key = os.environ.get("HABITICA_TOKEN")
+    from nodb import NoDB
+    nodb = NoDB()
+    nodb.serializer = "json"
+    nodb.bucket = 'alexa-life-tracker'
+    nodb.index = 'user'
+    # check if exists first
+    nodb_key = amz_user_id + '-keys'
+    lt_user = nodb.load(nodb_key)
+    if not lt_user:
+        print("user not found, creating new entry")
+        lt_user = {}
+    else:
+        print('user found data is %s ' % str(lt_user))
+
+    print("updating user")
+    lt_user.update({'user': nodb_key,
+                    'habitica_user': habitica_user,
+                    'habitica_key': habitica_key
+                    })
+    nodb.save(lt_user)
+
+
+@task
 def flake(ctx):
     '''static linter to ensure code passes standards'''
     """Run flake8 on codebase."""

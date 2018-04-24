@@ -4,6 +4,7 @@ from __future__ import print_function
 from nodb import NoDB
 from datetime import datetime
 import random
+import habitica_api
 
 # --------------- response handlers -----------------
 
@@ -21,8 +22,8 @@ def on_intent(request, session):
     # Dispatch to your skill's intent handlers
     if intent_name == "CompleteTaskIntent":
         return complete_task(intent, session)
-    elif intent_name == "ListTaskIntent":
-        pass
+    elif intent_name == "ListTasksIntent":
+        return list_tasks(intent, session)
     elif intent_name == "AMAZON.HelpIntent":
         return get_welcome_response()
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
@@ -90,6 +91,31 @@ def get_welcome_response():
 
 def task_attrib(task_name):
     return {'task': task_name}
+
+
+def list_tasks(intent, session):
+    card_title = intent['name']
+    session_attributes = {}
+    end_session = True
+    speech_type = 'PlainText'
+
+    # TODO: handle time requests...
+
+    # default... list first five todos
+    # TODO: cache user creds in session
+    habitica = habitica_api.get_habitica(session)
+    session_attributes['habitica_auth_header'] = habitica.auth_headers
+    tasks = habitica.get_todos()
+    speech_output = "You have %s todos.  They are, " % len(tasks)
+    for task in tasks:
+        task_name = task.get('text')
+        if task_name:
+            speech_output += task_name + ", "
+
+    reprompt_text = "Quest away and build thy character"
+
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, end_session, speech_type))
 
 
 def complete_task(intent, session):
