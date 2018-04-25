@@ -38,6 +38,14 @@ def on_session_started(session_started_request, session):
     print("on_session_started requestId=" + session_started_request['requestId']
           + ", sessionId=" + session['sessionId'])
 
+    attrib = session.get('attributes', {}).get('habitica_auth_header')
+    if not attrib:
+        print('not cached user getting habitica connection')
+        habitica = habitica_api.get_habitica(session)
+        print('got haibitica auth headers')
+        attrib = {'habitica_auth_header': habitica.auth_headers}
+    return build_response(attrib, None)
+
 
 def on_launch(launch_request, session):
     """ Called when the user launches the skill without specifying what they
@@ -104,15 +112,18 @@ def list_tasks(intent, session):
     # default... list first five todos
     # TODO: cache user creds in session
     habitica = habitica_api.get_habitica(session)
-    session_attributes['habitica_auth_header'] = habitica.auth_headers
     tasks = habitica.get_todos()
-    speech_output = "You have %s todos.  They are, " % len(tasks)
-    for task in tasks:
-        task_name = task.get('text')
-        if task_name:
-            speech_output += task_name + ", "
-
-    reprompt_text = "Quest away and build thy character"
+    if not tasks:
+        speech_output = "You don't have any to dos.  Try saying add to do to add one."
+        end_session = False
+        reprompt_text = "Did you want to add another todo?  Say add to do name."
+    else:
+        speech_output = "You have %s to dos.  They are. " % len(tasks)
+        for task in tasks:
+            task_name = task.get('text')
+            if task_name:
+                speech_output += task_name + ", "
+        reprompt_text = "Quest away and build thy character"
 
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, end_session, speech_type))
@@ -123,20 +134,37 @@ def complete_task(intent, session):
     session_attributes = {}
     end_session = False
     speech_type = 'PlainText'
+    reprompt_text = "Thanks for use Life Tracker.  May the force be with you."
 
     # try to get alexa to fill in the slots first
     if 'task' in intent['slots']:
         task = intent['slots']['task'].get('value', None)
         if task:
-            session_attributes = task_attrib(task)
-            speech_output = positive_response(task)
-            speech_type = "SSML"
-            # speech_output = "Super.  You just completed your task " + task + \
-            #                ".  Great work."
-            # store to simple db
-            reprompt_text = "Thanks for use Life Tracker.  May the force be with you."
-            update_taskdb(task, session['user']['userId'])
-            end_session = True
+            #
+            task_info = habitica_api.match_task_with_habitica(task, session)
+            session_attributes = task_info['all']
+            if not task_info['query']['found']:
+                speech_output = "Can't find that, did you you mean %s?" % task_info['query']['key']
+                return confirm_slot('task', task_info['query']['key'],
+                                    intent, speech_output, session_attributes)
+            else:
+                habitica = habitica_api.get_habitica(session)
+                res = habitica.complete_task(task_info['query']['id'], task_info['query']['direction'])
+                if res['success']:
+                    print("completed task")
+                    print(res)
+                    # todo complete task
+                    speech_output = positive_response(task)
+                    speech_type = "SSML"
+                    # speech_output = "Super.  You just completed your task " + task + \
+                    #                ".  Great work."
+                    # store to simple db
+                    # update_taskdb(task, session['user']['userId'])
+                    end_session = True
+                else:
+                    speech_output = "I'm sorry you can't do that. " + res['message']
+
+                    end_session = True
         else:
             print("not task, lets elicit it")
             speech_output = "And what was it you did exactly?"
@@ -180,6 +208,26 @@ def positive_response(task):
     return speech_output
 
 
+def confirm_slot(slot, slot_value, intent, speech_output, session, should_end_session=False):
+    intent['slots'][slot]['value'] = slot_value
+
+    speech_part = {
+        'outputSpeech': {
+            'type': 'PlainText',
+            'text': speech_output
+        },
+        'shouldEndSession': should_end_session,
+        "directives": [
+                          {
+                            "type": "Dialog.ConfirmSlot",
+                            "slotToConfirm": slot,
+                            "updatedIntent": intent
+                           }
+                       ]
+        }
+    return build_response(session, speech_part)
+
+
 def elicit_slot(slot, intent, speech_output, session, should_end_session=False):
     speech_part = {
         'outputSpeech': {
@@ -221,12 +269,14 @@ def build_speechlet_response(title, output, reprompt_text, should_end_session,
     }
 
 
-def build_response(session_attributes, speechlet_response):
-    return {
+def build_response(session_attributes, speechlet_response=None):
+    retval = {
         'version': '1.0',
         'sessionAttributes': session_attributes,
-        'response': speechlet_response
     }
+    if speechlet_response:
+        retval['response'] = speechlet_response
+    return retval
 
 
 # --------------- external integrations -----------------
@@ -250,12 +300,11 @@ def update_taskdb(task, user):
         current_task.insert(0, completion_time)
         user_tasks[task] = current_task
     else:
-        user_tasks = {'user': user,
-                      'tasks': {task: [completion_time, ]}
-                      }
+        db_tasks = {'user': user,
+                    'tasks': {task: [completion_time, ]}
+                    }
 
-    nodb.save(user_tasks)
-
+    nodb.save(db_tasks)
 
 # --------------- entry point -----------------
 
