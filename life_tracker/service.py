@@ -173,8 +173,13 @@ def list_tasks(intent, session):
         end_session = False
         reprompt_text = "Did you want to add another todo?  Say add task name."
     else:
-        type_word = task_type if task_type.endswith('s') else task_type + 's'
+        type_word = tasks[0]['type']
+        type_word = type_word if type_word.endswith('s') else type_word + 's'
         speech_output = "You have %s %s. " % (len(tasks), type_word)
+
+        speech_output += combine_list_with_and(tasks, 5, start=True)
+
+        '''
         if len(tasks) > 4:
             speech_output += "Here are the first 5. "
         else:
@@ -183,6 +188,7 @@ def list_tasks(intent, session):
         end_of_msg = last_task.get('text')
         if tasks:
             end_of_msg = 'and, ' + end_of_msg
+
         for idx, task in enumerate(tasks):
             task_name = task.get('text')
             if task_name:
@@ -190,11 +196,30 @@ def list_tasks(intent, session):
             if idx >= 3:
                 break
         speech_output += end_of_msg
+        '''
 
         reprompt_text = "Quest away and build thy character"
 
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, end_session, speech_type))
+
+
+def combine_list_with_and(seq, chunk_size, start=True):
+
+    res = ", ".join(item.get('text') for item in seq[:chunk_size] if item.get('text'))
+
+    if chunk_size > 1 and len(seq) > 1:
+        temp = res.rsplit(',', 1)
+        res = ' and'.join(temp)
+
+    speech_output = ''
+    if start:
+        if len(seq) >= chunk_size:
+            speech_output = "Here are the first " + str(chunk_size) + ". "
+        else:
+            speech_output = "They are. "
+
+    return speech_output + res
 
 
 def complete_task(intent, session):

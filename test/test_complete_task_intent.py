@@ -1,4 +1,4 @@
-from life_tracker.service import lambda_handler
+from life_tracker.service import lambda_handler, combine_list_with_and
 import pytest
 
 
@@ -73,3 +73,15 @@ def complete_task_request():
 def test_complete_task_intent_started(complete_task_request):
     res = lambda_handler(complete_task_request, None)
     print(res)
+
+
+def test_combine_list_with_and():
+    lisd = [{'text': 'orange'}, {'text': 'yellow'}, {'text': 'green'}]
+    combine = combine_list_with_and(lisd, 2, False)
+    assert combine == 'orange and yellow'
+    combine = combine_list_with_and(lisd, 1, False)
+    assert combine == 'orange'
+    combine = combine_list_with_and(lisd, 3, True)
+    assert combine == 'Here are the first 3. orange, yellow and green'
+    combine = combine_list_with_and(lisd, 4, True)
+    assert combine == 'They are. orange, yellow and green'

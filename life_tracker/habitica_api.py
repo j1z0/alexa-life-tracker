@@ -21,10 +21,10 @@ class NotRegisteredException(Exception):
 
 
 BASE_HABITICA_URL = 'https://habitica.com/api/v3/'
-TASK_TYPES = FuzzyDict({'daily': 'daily',
-                        'todo': 'todo',
-                        'reward': 'reward',
-                        'habit': 'habit'
+TASK_TYPES = FuzzyDict({'daily': 'dailys',
+                        'todo': 'todos',
+                        'reward': 'rewards',
+                        'habit': 'habits'
                         })
 
 
@@ -66,13 +66,14 @@ class Habitica(object):
 
         url = BASE_HABITICA_URL + 'tasks/user'
         if habitica_type:
-            url += '?type=%s' % task_type
+            url += '?type=%s' % habitica_type
 
         resp = requests.get(url, headers=self.auth_headers)
         if resp.status_code == 200:
             return resp.json()['data']
         else:
-            raise Exception("Couldn't connect to Habitica, with supplied credentials")
+            raise Exception("Couldn't connect to Habitica, with supplied credentials %s" %
+                            str(resp.json()))
 
     def get_todos(self):
         return self.get_tasks(task_type='todos')
