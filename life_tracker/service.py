@@ -174,10 +174,9 @@ def list_tasks(intent, session):
         reprompt_text = "Did you want to add another todo?  Say add task name."
     else:
         type_word = tasks[0]['type']
-        type_word = type_word if type_word.endswith('s') else type_word + 's'
         speech_output = "You have %s %s. " % (len(tasks), type_word)
 
-        speech_output += combine_list_with_and(tasks, 5, start=True)
+        speech_output += combine_list_with_and(tasks, 6, start=True)
 
         reprompt_text = "Quest away and build thy character"
 

@@ -26,6 +26,11 @@ TASK_TYPES = FuzzyDict({'daily': 'dailys',
                         'reward': 'rewards',
                         'habit': 'habits'
                         })
+ADD_TASK_TYPES = FuzzyDict({'daily': 'daily',
+                            'todo': 'todo',
+                            'reward': 'reward',
+                            'habit': 'habit'
+                            })
 
 
 class Habitica(object):
@@ -43,7 +48,7 @@ class Habitica(object):
             raise Exception('need either amazon id or auth headers to create Habitica object')
 
     def get_tasks_simple(self, task_type=None):
-        tasks_detail = self.get_tasks(task_type)
+        tasks_detail, _ = self.get_tasks(task_type)
         tasks = FuzzyDict()
         for td in tasks_detail:
             simple_task = {'id': td['id'],
@@ -106,7 +111,7 @@ class Habitica(object):
 
     def add_task(self, task, task_type='todo'):
         url = BASE_HABITICA_URL + 'tasks/user'
-        task_type = TASK_TYPES[task_type]
+        task_type = ADD_TASK_TYPES[task_type]
         # text,type,notes
         data = {'text': task, 'type': task_type,
                 'notes': '... added by Alexa Life Tracker',
