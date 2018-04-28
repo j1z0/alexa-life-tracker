@@ -164,12 +164,12 @@ def list_tasks(intent, session):
         task_type = intent['slots']['task_type'].get('value', None)
     print("i got %s" % task_type)
     habitica = habitica_api.get_habitica(session)
-    tasks = habitica.get_tasks(task_type)
+    tasks, type_word = habitica.get_tasks(task_type)
     if not tasks:
         if task_type is None:
-            task_type = 'task'
-        speech_output = "You don't have any %ss.  Try saying add task name to my %s." % (task_type,
-                                                                                         task_type)
+            type_word = 'task'
+        speech_output = "You don't have any %s. Try saying add task name to my %s." % (type_word,
+                                                                                       type_word)
         end_session = False
         reprompt_text = "Did you want to add another todo?  Say add task name."
     else:
@@ -178,25 +178,6 @@ def list_tasks(intent, session):
         speech_output = "You have %s %s. " % (len(tasks), type_word)
 
         speech_output += combine_list_with_and(tasks, 5, start=True)
-
-        '''
-        if len(tasks) > 4:
-            speech_output += "Here are the first 5. "
-        else:
-            speech_output += "They are. "
-        last_task = tasks.pop()
-        end_of_msg = last_task.get('text')
-        if tasks:
-            end_of_msg = 'and, ' + end_of_msg
-
-        for idx, task in enumerate(tasks):
-            task_name = task.get('text')
-            if task_name:
-                speech_output += task_name + ", "
-            if idx >= 3:
-                break
-        speech_output += end_of_msg
-        '''
 
         reprompt_text = "Quest away and build thy character"
 

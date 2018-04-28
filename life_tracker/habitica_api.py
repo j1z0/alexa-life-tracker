@@ -70,10 +70,11 @@ class Habitica(object):
 
         resp = requests.get(url, headers=self.auth_headers)
         if resp.status_code == 200:
-            return resp.json()['data']
+            return resp.json()['data'], habitica_type
         else:
             raise Exception("Couldn't connect to Habitica, with supplied credentials %s" %
                             str(resp.json()))
+        return None, habitica_type
 
     def get_todos(self):
         return self.get_tasks(task_type='todos')
