@@ -125,7 +125,7 @@ class Habitica(object):
         return data
 
     def get_user_stats(self):
-        url = BASE_HABITICA_URL + 'user?userFields=stats.gp,stats.hp,stats.mp,stats.exp,stats.lvl'
+        url = BASE_HABITICA_URL + 'user?userFields=stats'
         resp = requests.get(url, headers=self.auth_headers)
         return resp.json()
 

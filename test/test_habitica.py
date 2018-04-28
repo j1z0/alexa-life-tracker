@@ -22,6 +22,13 @@ def test_match_task_with_habitica():
     print(ret)
 
 
+def test_get_user_stats():
+    amz = os.environ['AMZ_USER_ID']
+    habitica = Habitica(amz)
+    stats = habitica.get_user_stats()
+    assert(stats)
+
+
 def test_complete_task():
     amz = os.environ['AMZ_USER_ID']
     habitica = Habitica(amz)

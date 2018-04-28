@@ -166,14 +166,19 @@ def list_tasks(intent, session):
     habitica = habitica_api.get_habitica(session)
     tasks, type_word = habitica.get_tasks(task_type)
     if not tasks:
+        spacer = ''
         if task_type is None:
             type_word = 'task'
-        speech_output = "You don't have any %s. Try saying add task name to my %s." % (type_word,
-                                                                                       type_word)
+        if type_word == 'todos':
+            type_word = 'todo'
+            spacer = 'thing '
+        speech_output = "You don't have any %s%s. Try saying" + \
+                        " add task name to my %s." % (spacer, type_word, type_word)
         end_session = False
         reprompt_text = "Did you want to add another todo?  Say add task name."
     else:
         type_word = tasks[0]['type']
+        type_word = type_word if type_word.endswith('s') else type_word + "'s"
         speech_output = "You have %s %s. " % (len(tasks), type_word)
 
         speech_output += combine_list_with_and(tasks, 6, start=True)
