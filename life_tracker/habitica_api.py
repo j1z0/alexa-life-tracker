@@ -106,6 +106,7 @@ class Habitica(object):
 
     def add_task(self, task, task_type='todo'):
         url = BASE_HABITICA_URL + 'tasks/user'
+        task_type = TASK_TYPES[task_type]
         # text,type,notes
         data = {'text': task, 'type': task_type,
                 'notes': '... added by Alexa Life Tracker',
