@@ -21,6 +21,11 @@ class NotRegisteredException(Exception):
 
 
 BASE_HABITICA_URL = 'https://habitica.com/api/v3/'
+TASK_TYPES = FuzzyDict({'daily': 'daily',
+                        'todo': 'todo',
+                        'reward': 'reward',
+                        'habit': 'habit'
+                        })
 
 
 class Habitica(object):
@@ -51,9 +56,16 @@ class Habitica(object):
         return tasks
 
     def get_tasks(self, task_type=None):
-        url = BASE_HABITICA_URL + 'tasks/user'
 
-        if task_type:
+        habitica_type = None
+        try:
+            if task_type:
+                habitica_type = TASK_TYPES[task_type]
+        except KeyError:
+            pass
+
+        url = BASE_HABITICA_URL + 'tasks/user'
+        if habitica_type:
             url += '?type=%s' % task_type
 
         resp = requests.get(url, headers=self.auth_headers)
@@ -70,21 +82,45 @@ class Habitica(object):
         url = BASE_HABITICA_URL + "tasks/%s/score/%s" % (task_id, direction)
 
         # get current stats so we can calculate bonus
-        status = self.get_user_stats()
+        before = self.get_user_stats()['data']
         data = {'scoreNotes': 'scored by life-tracker Alexa skill'}
         resp = requests.post(url, data=data, headers=self.auth_headers)
-        data = resp.json()
-        print("in complete_task resp is %s" % data)
+        after = resp.json().get('data')
 
-        import pdb
-        pdb.set_trace()
-        data - status
-        return resp.json()
+        ret = {}
+        if after:
+            print("in complete_task resp is %s" % after)
+            ret['gold_earned'] = round(after['gp'] - before['stats']['gp'], 2)
+            ret['xp_earned'] = after['exp'] - before['stats']['exp']
+            ret['lvl_earned'] = after['lvl'] - before['stats']['lvl']
+            ret['class'] = after['class']
+        else:
+            # let's try and determine the error
+            ret['error'] = resp.json()['message']
+            if resp.json()['message'].startswith('Your session is outdated'):
+                ret['error'] = "You've already done that today, try again tommorrow"
+
+        return ret
+
+    def add_task(self, task, task_type='todo'):
+        url = BASE_HABITICA_URL + 'tasks/user'
+        # text,type,notes
+        data = {'text': task, 'type': task_type,
+                'notes': '... added by Alexa Life Tracker',
+                }
+        if task_type == 'habit':
+            data['up'] = True
+            data['down'] = False
+        resp = requests.post(url, data=data, headers=self.auth_headers)
+        data = resp.json()
+        print("in add_task(%s, %s) resp is %s" % (task, task_type, data))
+        return data
 
     def get_user_stats(self):
-        url = BASE_HABITICA_URL + 'user?userFields=stats.gp,stats.hp,stats.mp,stats.xp'
+        url = BASE_HABITICA_URL + 'user?userFields=stats.gp,stats.hp,stats.mp,stats.exp,stats.lvl'
         resp = requests.get(url, headers=self.auth_headers)
         return resp.json()
+
 
 def get_habitica(session):
     '''
@@ -98,6 +134,13 @@ def get_habitica(session):
     else:
         print("in get_habitica no cached auth")
         return Habitica(userid)
+
+
+def add_task(session, task, task_type='todo'):
+    habitica_type = TASK_TYPES[task_type]
+    print("picked type %s from input %s" % (habitica_type, task_type))
+    habitica = get_habitica(session)
+    return habitica.add_task(task, habitica_type)
 
 
 def match_task_with_habitica(task, session):

@@ -23,10 +23,21 @@ def test_match_task_with_habitica():
 
 
 def test_complete_task():
-    pass
     amz = os.environ['AMZ_USER_ID']
     habitica = Habitica(amz)
-    tasks = habitica.get_tasks_simple()
-    # TODO create the todo first... then complete it
-    res = habitica.complete_task(tasks['laundry']['id'])
-    print(res)
+    new_task = habitica.add_task('make this unittest pass', 'todo')
+    # now complete the one we just created
+    res = habitica.complete_task(new_task['data']['_id'])
+    assert(res['gold_earned'] > 0)
+    assert('xp_earned' in res)
+    assert('lvl_earned' in res)
+
+
+def test_complete_daily():
+    amz = os.environ['AMZ_USER_ID']
+    habitica = Habitica(amz)
+    # daily - farting
+    id = 'd5df2968-89d9-462b-bcb9-146c2c600b01'
+    # now complete the one we just created
+    res = habitica.complete_task(id)
+    assert(res)

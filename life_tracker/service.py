@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-""" Habit Tracker """
-from __future__ import print_function
 from nodb import NoDB
 from datetime import datetime
 import random
@@ -24,6 +21,8 @@ def on_intent(request, session):
         return complete_task(intent, session)
     elif intent_name == "ListTasksIntent":
         return list_tasks(intent, session)
+    elif intent_name == "AddTaskIntent":
+        return add_task(intent, session)
     elif intent_name == "AMAZON.HelpIntent":
         return get_welcome_response()
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
@@ -38,13 +37,14 @@ def on_session_started(session_started_request, session):
     print("on_session_started requestId=" + session_started_request['requestId']
           + ", sessionId=" + session['sessionId'])
 
-    attrib = session.get('attributes', {}).get('habitica_auth_header')
+    '''attrib = session.get('attributes', {}).get('habitica_auth_header')
     if not attrib:
         print('not cached user getting habitica connection')
         habitica = habitica_api.get_habitica(session)
         print('got haibitica auth headers')
         attrib = {'habitica_auth_header': habitica.auth_headers}
     return build_response(attrib, None)
+    '''
 
 
 def on_launch(launch_request, session):
@@ -101,6 +101,55 @@ def task_attrib(task_name):
     return {'task': task_name}
 
 
+def add_task(intent, session):
+    '''
+    User: add my my husband's birthday to my calendar
+    slots - targetCollection.owner.name - my
+            object.name - my husband's birthday
+            targetCollection.type - calendar
+    '''
+    card_title = intent['name']
+    session_attributes = {}
+    end_session = True
+    speech_type = 'PlainText'
+    reprompt_text = "I didn't get that. Try saying add task name "
+
+    if 'task' in intent['slots'] and 'task_type' in intent['slots']:
+        task = intent['slots']['task'].get('value', None)
+        if not task:
+            print("not task, lets elicit it")
+            speech_output = "I'm sorry what task did you want to add?"
+            elicit = elicit_slot('task', intent, speech_output, session_attributes)
+            print(elicit)
+            return elicit
+
+        task_type = intent['slots']['task_type'].get('value', None)
+        print("task_type is %s" % task_type)
+        try:
+            res = habitica_api.add_task(session, task, task_type)
+        except KeyError as e:
+            print("Key error adding task %s" % str(e))
+            speech_output = "Did you want to add a habit, daily, todo, or a reward?"
+            elicit = elicit_slot('task_type', intent, speech_output, session_attributes)
+            return elicit
+
+        if res['success']:
+            print("added task")
+            print(res)
+            # todo complete task
+            speech_output = "Task Added."
+            end_session = True
+        else:
+            speech_output = "I'm sorry you can't do that. " + res['message']
+            end_session = True
+    else:
+        speech_output = "I didn't get that. Try saying add task name "
+        end_session = True
+
+    return build_response(session_attributes, build_speechlet_response(
+                          card_title, speech_output, reprompt_text, end_session, speech_type))
+
+
 def list_tasks(intent, session):
     card_title = intent['name']
     session_attributes = {}
@@ -109,20 +158,39 @@ def list_tasks(intent, session):
 
     # TODO: handle time requests...
 
-    # default... list first five todos
-    # TODO: cache user creds in session
+    task_type = None
+    print("im in the list_tasks")
+    if 'task_type' in intent['slots']:
+        task_type = intent['slots']['task_type'].get('value', None)
+    print("i got %s" % task_type)
     habitica = habitica_api.get_habitica(session)
-    tasks = habitica.get_todos()
+    tasks = habitica.get_tasks(task_type)
     if not tasks:
-        speech_output = "You don't have any to dos.  Try saying add to do to add one."
+        if task_type is None:
+            task_type = 'task'
+        speech_output = "You don't have any %ss.  Try saying add task name to my %s." % (task_type,
+                                                                                         task_type)
         end_session = False
-        reprompt_text = "Did you want to add another todo?  Say add to do name."
+        reprompt_text = "Did you want to add another todo?  Say add task name."
     else:
-        speech_output = "You have %s to dos.  They are. " % len(tasks)
-        for task in tasks:
+        type_word = task_type if task_type.endswith('s') else task_type + 's'
+        speech_output = "You have %s %s. " % (len(tasks), type_word)
+        if len(tasks) > 4:
+            speech_output += "Here are the first 5. "
+        else:
+            speech_output += "They are. "
+        last_task = tasks.pop()
+        end_of_msg = last_task.get('text')
+        if tasks:
+            end_of_msg = 'and, ' + end_of_msg
+        for idx, task in enumerate(tasks):
             task_name = task.get('text')
             if task_name:
                 speech_output += task_name + ", "
+            if idx >= 3:
+                break
+        speech_output += end_of_msg
+
         reprompt_text = "Quest away and build thy character"
 
     return build_response(session_attributes, build_speechlet_response(
@@ -134,13 +202,12 @@ def complete_task(intent, session):
     session_attributes = {}
     end_session = False
     speech_type = 'PlainText'
-    reprompt_text = "Thanks for use Life Tracker.  May the force be with you."
+    reprompt_text = "Thanks for using Life Tracker.  May the force be with you."
 
     # try to get alexa to fill in the slots first
     if 'task' in intent['slots']:
         task = intent['slots']['task'].get('value', None)
         if task:
-            #
             task_info = habitica_api.match_task_with_habitica(task, session)
             session_attributes = task_info['all']
             if not task_info['query']['found']:
@@ -150,11 +217,12 @@ def complete_task(intent, session):
             else:
                 habitica = habitica_api.get_habitica(session)
                 res = habitica.complete_task(task_info['query']['id'], task_info['query']['direction'])
-                if res['success']:
+                if 'gold_earned' in res:
                     print("completed task")
                     print(res)
                     # todo complete task
-                    speech_output = positive_response(task)
+                    speech_output = positive_response(task, res)
+                    # add points output
                     speech_type = "SSML"
                     # speech_output = "Super.  You just completed your task " + task + \
                     #                ".  Great work."
@@ -162,8 +230,7 @@ def complete_task(intent, session):
                     # update_taskdb(task, session['user']['userId'])
                     end_session = True
                 else:
-                    speech_output = "I'm sorry you can't do that. " + res['message']
-
+                    speech_output = "I'm sorry you can't do that. " + res['error']
                     end_session = True
         else:
             print("not task, lets elicit it")
@@ -171,9 +238,6 @@ def complete_task(intent, session):
             elicit = elicit_slot('task', intent, speech_output, session_attributes)
             print(elicit)
             return elicit
-            # reprompt_text = "I'm not sure what task you just completed. " + \
-            #                "You can log a task by saying, " + \
-            #                "I just completed, task name."
 
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, end_session, speech_type))
@@ -191,7 +255,7 @@ def end_session():
 # --------------- Helpers that build all of the responses ----------------------
 
 
-def positive_response(task):
+def positive_response(task, task_res):
     pos_words = ['all righty', 'aooga', 'as you wish', 'bada bing bada boom', 'bam'
                  'bazinga', 'bingo', 'boom', 'booya', 'bravo', 'cha ching', 'cowabunga',
                  'dun dun dun', 'dynomite', 'eureka', 'fancy that', 'hear hear',
@@ -199,12 +263,21 @@ def positive_response(task):
                  'kapow', 'kazaam', 'no way', 'oh snap', 'ohh la la', 'righto', 'wahoo',
                  'way to go', 'well done', 'whammo', 'whee', 'woo hoo', 'wowza', 'wow',
                  'yay', 'yippee', ]
-
+    lvl_up_words = ['oh snap', 'no way', 'huzzah']
     final_word = ['great work!', 'good job!', 'amazing!', "you're awesome!", "stupendous",
                   'magnificent!', 'fasinating!', 'fantastic!']
+
     congrats = '<say-as interpret-as="interjection">%s</say-as>' % random.choice(pos_words)
+
+    # calc exp / gold
+    if task_res['lvl_earned']:
+        lvlup = '<say-as interpret-as="interjection">%s</say-as>. You leveled up! ' % random.choice(lvl_up_words)
+    else:
+        lvlup = 'You gained %s gold pieces and %s experience! ' % (task_res['gold_earned'],
+                                                                   task_res['xp_earned'])
+
     speech_output = "<speak> " + congrats + ". You just completed your task " + task + \
-                    ". " + random.choice(final_word) + "</speak>"
+                    ". " + lvlup + random.choice(final_word) + "</speak>"
     return speech_output
 
 

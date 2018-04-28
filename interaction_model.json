@@ -1,0 +1,611 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "life tracker",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "CompleteTaskIntent",
+                    "slots": [
+                        {
+                            "name": "task",
+                            "type": "TaskType",
+                            "samples": [
+                                "folded clothes",
+                                "washed dishes",
+                                "finished chores",
+                                "did my homework",
+                                "stretched",
+                                "exercises",
+                                "meditated",
+                                "did dishes",
+                                "I walked the dog"
+                            ]
+                        },
+                        {
+                            "name": "complete_word",
+                            "type": "CompleteWordType"
+                        },
+                        {
+                            "name": "mark_word",
+                            "type": "mark_word"
+                        }
+                    ],
+                    "samples": [
+                        "{complete_word}",
+                        "{complete_word} {task}",
+                        "{mark_word} {task} {complete_word}"
+                    ]
+                },
+                {
+                    "name": "ListTasksIntent",
+                    "slots": [
+                        {
+                            "name": "time",
+                            "type": "AMAZON.TIME"
+                        }
+                    ],
+                    "samples": [
+                        "do I have any tasks",
+                        "do I have any todos",
+                        "what todos do I have currently",
+                        "what are my todos",
+                        "what are my tasks",
+                        "what todos do I have",
+                        "list todo",
+                        "what are my todo",
+                        "list my todos",
+                        "tell me what did I do {time}",
+                        "what did I do {time}",
+                        "did I do {time}",
+                        "what habbits did I do {time}",
+                        "what tasks did I complete {time}",
+                        "tell me what tasks I have completed",
+                        "tell me what I have done",
+                        "What have I done"
+                    ]
+                },
+                {
+                    "name": "AMAZON.PauseIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.ResumeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.AddAction<object@Event>",
+                    "samples": []
+                }
+            ],
+            "types": [
+                {
+                    "name": "CompleteWordType",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "I just finished"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I've done my"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I have finished"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I've finished"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I am complete with"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I am complete"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "did it"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I did it"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "done"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I completed"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "completed"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I finished"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "finished"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "I am done"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "complete"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "TaskType",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "plotting the heist"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "making love"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "transendental meditation"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "meditation"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "doing nothing"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "playing games"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "clarinet"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "flute"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "saxaphone"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "trombone"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "trumpet"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "art"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "algebra"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "chemistry"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "science"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "math"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "biology"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "readying"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "studing"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "taking photos"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "marketing"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "fixing the computer"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "working on the car"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "fixing up the house"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "honey dos"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "fixing lunch"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "making lunch"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "cooking lunch"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "cooking dinner"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "cooking"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "cleaning bathroom"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Preparing meals"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Feeding the ferret"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Feeding the birds"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Feeding the Cat"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Feeding the Dog"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Feeding pets"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Washing dishes"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Vacuuming"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Sweeping"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Dusting"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "run"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "eat"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "make the bed"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "walk the dog"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "walk dog"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "groceries"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "cleaning the house"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "pushups"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "sleeping"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "painting"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "calculus homework"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "set the table"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "wash the car"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "ugly bugly"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "goodbumps"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "jumping jacks"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "drinking water"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "exercise"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "meditating"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "working out"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "my workout"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "folding the laundry"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "folding clothes"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "my homework"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "the dishes"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "mark_word",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "to mark"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "to set"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "mark"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "set"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "dialog": {
+            "intents": [
+                {
+                    "name": "CompleteTaskIntent",
+                    "confirmationRequired": false,
+                    "prompts": {},
+                    "slots": [
+                        {
+                            "name": "task",
+                            "type": "TaskType",
+                            "confirmationRequired": true,
+                            "elicitationRequired": true,
+                            "prompts": {
+                                "confirmation": "Confirm.Slot.1041141284136.99641831971",
+                                "elicitation": "Elicit.Slot.39877946541.1368870075417"
+                            }
+                        },
+                        {
+                            "name": "complete_word",
+                            "type": "CompleteWordType",
+                            "confirmationRequired": false,
+                            "elicitationRequired": false,
+                            "prompts": {}
+                        },
+                        {
+                            "name": "mark_word",
+                            "type": "mark_word",
+                            "confirmationRequired": false,
+                            "elicitationRequired": false,
+                            "prompts": {}
+                        }
+                    ]
+                }
+            ]
+        },
+        "prompts": [
+            {
+                "id": "Elicit.Slot.39877946541.1368870075417",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "you did what exactly?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "tell me what you did?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "great, what did you do again?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "what was it you did?"
+                    }
+                ]
+            },
+            {
+                "id": "Confirm.Slot.1041141284136.99641831971",
+                "variations": [
+                    {
+                        "type": "PlainText",
+                        "value": "ok you, {task} , yes?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "I heard {task} , is that correct?"
+                    },
+                    {
+                        "type": "PlainText",
+                        "value": "right so you {task} , correct?"
+                    }
+                ]
+            }
+        ]
+    }
+}
