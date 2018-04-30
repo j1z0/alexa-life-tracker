@@ -28,3 +28,6 @@ tqdm
 # for lambda deploys
 requests
 -e git+https://github.com/j1z0/python-lambda.git#egg=python_lambda
+
+# for alexa acount-linking lambda 
+chalice
