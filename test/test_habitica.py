@@ -1,6 +1,6 @@
 import os
-from life_tracker.habitica_api import Habitica, match_task_with_habitica
-from life_tracker.fuzzy_dict import FuzzyDict
+from lambdas.life_tracker.habitica_api import Habitica, match_task_with_habitica
+from lambdas.life_tracker.fuzzy_dict import FuzzyDict
 
 
 def test_get_todos():
@@ -18,7 +18,8 @@ def test_get_tasks():
 
 
 def test_match_task_with_habitica():
-    ret = match_task_with_habitica('15', {'user': {'userId': os.environ['AMZ_USER_ID']}})
+    accessToken = os.environ['HABITICA_USER'] + ':' + os.environ['HABITICA_TOKEN']
+    ret = match_task_with_habitica('15', {'user': {'accessToken': accessToken}})
     print(ret)
 
 

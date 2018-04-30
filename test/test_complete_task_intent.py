@@ -1,4 +1,4 @@
-from life_tracker.service import lambda_handler, combine_list_with_and
+from lambdas.life_tracker.service import lambda_handler, combine_list_with_and
 import pytest
 
 

@@ -1,9 +1,21 @@
-# Pystarter
+# Life Tracker - Alexas Front End for Habitica 
 
-This is a starter repo, use this to get started with a new python project and get stuff like automated builds, tests, publish to pypi etc...
-Out of the box for free.
+Life Tracker is simplestly describe as a voice interface into Habitica.Com.  Which is the gamified task tracking platform where you get to build dungeons and drangons style character by completing everyday tasks and managing projects.  Currently its very v.0.1, but the basic interface exits. Ideally plans would be to create more group tasks / quests / rewards and specific powerups you could get only through the voice interface.  Also, Life Tracker itself will have it's own quests to be completed either by teams / individuals to unlcok Life Tracker features, such as optional voice / sound packs, new features added, user call outs, etc... 
 
-## helpful commands
+## Suggested Phrases 
+
+Alexa open life tracker
+
+Alexa tell life tracker I did it
+
+Alexa tell life tracker I made my bed
+
+Alexa ask life tracker what tasks do I have
+
+Alexa tell life tracker to list my commands
+
+Alexa 
+
 
 list all commands
 ```

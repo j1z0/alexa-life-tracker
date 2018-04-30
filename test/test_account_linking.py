@@ -3,7 +3,7 @@ Test for first time users authentication
 '''
 
 import pytest
-from life_tracker.service import lambda_handler
+from lambdas.life_tracker.service import lambda_handler
 
 
 @pytest.fixture

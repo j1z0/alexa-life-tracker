@@ -190,11 +190,11 @@ def chdir(dirname=None):
 
 
 @task
-def deploy(ctx, version=None, no_tests=False, name=u'life_tracker'):
+def deploy(ctx, version=None, no_tests=False, no_flake=False, name=u'life_tracker'):
     print("preparing for deploy...")
     print("make sure tests pass")
     if no_tests is False:
-        if test(ctx) != 0:
+        if test(ctx, no_flake=no_flake) != 0:
             print("tests need to pass first before deploy")
             return
 
