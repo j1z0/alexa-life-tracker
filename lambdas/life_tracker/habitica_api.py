@@ -132,6 +132,44 @@ class Habitica(object):
         resp = requests.get(url, headers=self.auth_headers)
         return resp.json()
 
+    def get_user_description(self):
+        url = BASE_HABITICA_URL + 'user'
+        resp = requests.get(url, headers=self.auth_headers).json()['data']
+
+        # interesting stuff
+        mount = resp['items'].get('currentMount', '')
+        if '-' in mount:
+            mount_words = mount.split('-')
+            mount_words.reverse()
+            mount = ' '.join(mount_words)
+
+        hair = resp['preferences'].get('hair', {}).get('color', '')
+        stats = resp['stats']
+        stats['gp'] = round(stats['gp'], 2)
+        inAch = resp['achievements']
+        achieve = {'perfect': inAch.get('prefect', 0),
+                   'quests': len(inAch.get('quests', [])),
+                   'challenges': len(inAch.get('challenges', [])),
+                   'joinedGuild': inAch.get('joinedGuild', False)
+                   }
+        # Build a sentence
+        desc = "You are a quite handsome %s haired level %s %s." \
+               % (hair, stats['lvl'], stats['class'])
+        if mount:
+            desc = desc + " Currently riding a " + mount + "."
+        else:
+            desc += "Currently unmounted."
+
+        desc += " Your stats are impressive having %s H.P. %s experience, %s magic points, and %s gold." \
+                % (stats['hp'], stats['exp'], stats['mp'], stats['gp'])
+
+        desc += " And you only need %s experience points to level up!" % stats['toNextLevel']
+        desc += " Plus on top of all that awesome, you've managed to complete "
+        desc += "%s quest, %s challenges, and had %s perfect days!  You Rock!" \
+                % (achieve['quests'], achieve['challenges'], achieve['perfect'])
+        return desc
+
+
 
 def get_habitica(session):
     '''
@@ -156,3 +194,9 @@ def match_task_with_habitica(task, session):
     matched, key, item, ratio = tasks._search(task)
     task_info = {'found': matched, 'key': key, 'id': item['id'], 'direction': item['direction']}
     return {'query': task_info, 'all': session_attribute}
+
+
+def describe_user(session):
+    habitica = get_habitica(session)
+    user = habitica.get_user_description()
+
