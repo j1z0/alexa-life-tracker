@@ -190,7 +190,7 @@ def chdir(dirname=None):
 
 
 @task
-def deploy(ctx, version=None, no_tests=False):
+def deploy(ctx, version=None, no_tests=False, name=u'life_tracker'):
     print("preparing for deploy...")
     print("make sure tests pass")
     if no_tests is False:
@@ -200,11 +200,11 @@ def deploy(ctx, version=None, no_tests=False):
 
     # dist directores are the enemy, clean the all
     print("cleaning house before deploying")
-    with chdir("./life_tracker/"):
+    with chdir("./lambdas/%s/" % name):
         clean(ctx)
 
         print("building lambda package")
-        deploy_lambda_package(ctx, u'life_tracker')
+        deploy_lambda_package(ctx, name)
         # need to clean up all dist, otherwise, installing local package takes forever
         clean(ctx)
 
@@ -221,7 +221,7 @@ def deploy_lambda_package(ctx, name):
             fullpath = os.path.join(tools_dir, filename)
             run("tar -xvf %s -C %s" % (fullpath, bin_dir))
     '''
-    aws_lambda.deploy(os.getcwd(), requirements='../requirements.txt')
+    aws_lambda.deploy(os.getcwd(), requirements='../../requirements.txt')
 
 
 @task

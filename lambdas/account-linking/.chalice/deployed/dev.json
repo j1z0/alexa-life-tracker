@@ -1,0 +1,23 @@
+{
+  "schema_version": "2.0",
+  "resources": [
+    {
+      "role_name": "account-linking-dev",
+      "role_arn": "arn:aws:iam::984653964434:role/account-linking-dev",
+      "name": "default-role",
+      "resource_type": "iam_role"
+    },
+    {
+      "lambda_arn": "arn:aws:lambda:us-east-1:984653964434:function:account-linking-dev",
+      "name": "api_handler",
+      "resource_type": "lambda_function"
+    },
+    {
+      "name": "rest_api",
+      "rest_api_id": "zv1vaf9896",
+      "rest_api_url": "https://zv1vaf9896.execute-api.us-east-1.amazonaws.com/api/",
+      "resource_type": "rest_api"
+    }
+  ],
+  "backend": "api"
+}

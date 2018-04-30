@@ -27,8 +27,26 @@ def on_intent(request, session):
         return get_welcome_response()
     elif intent_name == "AMAZON.CancelIntent" or intent_name == "AMAZON.StopIntent":
         return end_session()
+    elif intent_name == 'SayHello':
+        return register_user(intent, session)
     else:
         raise ValueError("Invalid intent")
+
+
+def register_user(intent, session):
+    """ Called just before account linking """
+
+    if not session['user'].get('accessToken'):
+        # invite the user to link accounts
+        session_attributes = {}
+        card_title = "Link to Your Habitica Account"
+        card_type = "LinkAccount"
+        speech_output = "Life Tracker links to your habitica to gamify your life. " + \
+                        "Use the companion app to link your account now. "
+        reprompt_text = ""
+        should_end_session = False
+        return build_response(session_attributes, build_speechlet_response(
+            card_title, speech_output, reprompt_text, should_end_session, card_type=card_type))
 
 
 def on_session_started(session_started_request, session):
@@ -36,6 +54,15 @@ def on_session_started(session_started_request, session):
 
     print("on_session_started requestId=" + session_started_request['requestId']
           + ", sessionId=" + session['sessionId'])
+
+    # if we don't have access token prompt for it
+    if not session.get('user', {}).get('accessToken'):
+        res = register_user(None, session)
+        print("register user res " + str(res))
+        return res
+    else:
+        print("we got user with access token" + session['user']['accessToken'])
+        return None
 
     '''attrib = session.get('attributes', {}).get('habitica_auth_header')
     if not attrib:
@@ -167,7 +194,7 @@ def list_tasks(intent, session):
     tasks, type_word = habitica.get_tasks(task_type)
     if not tasks:
         spacer = ''
-        if task_type is None:
+        if task_type is None or type_word is None:
             type_word = 'task'
         if type_word == 'todos':
             type_word = 'todo'
@@ -330,7 +357,7 @@ def elicit_slot(slot, intent, speech_output, session, should_end_session=False):
 
 
 def build_speechlet_response(title, output, reprompt_text, should_end_session,
-                             speech_type='PlainText'):
+                             speech_type='PlainText', card_type='Simple'):
     text_keyword = 'text' if speech_type == 'PlainText' else 'ssml'
     return {
         'outputSpeech': {
@@ -338,7 +365,7 @@ def build_speechlet_response(title, output, reprompt_text, should_end_session,
             text_keyword: output,
         },
         'card': {
-            'type': 'Simple',
+            'type': card_type,
             'title': "SessionSpeechlet - " + title,
             'content': "SessionSpeechlet - " + output
         },
@@ -407,13 +434,18 @@ def lambda_handler(event, context):
     # if (event['session']['application']['applicationId'] !=
     #         "amzn1.echo-sdk-ams.app.[unique-value-here]"):
     #     raise ValueError("Invalid Application ID")
-    if event['session']['new']:
-        on_session_started({'requestId': event['request']['requestId']},
-                           event['session'])
+
+    # very start of coversation
 
     if event['request']['type'] == "LaunchRequest":
+        # does not require account linking
         return on_launch(event['request'], event['session'])
-    elif event['request']['type'] == "IntentRequest":
-        return on_intent(event['request'], event['session'])
     elif event['request']['type'] == "SessionEndedRequest":
         return on_session_ended(event['request'], event['session'])
+    elif event['session']['new']:
+        print("in session.new")
+        res = on_session_started({'requestId': event['request']['requestId']},
+                           event['session'])
+        if res: return res
+    if event['request']['type'] == "IntentRequest":
+        return on_intent(event['request'], event['session'])

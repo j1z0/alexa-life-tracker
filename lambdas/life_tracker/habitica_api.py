@@ -35,15 +35,18 @@ ADD_TASK_TYPES = FuzzyDict({'daily': 'daily',
 
 class Habitica(object):
 
-    def __init__(self, amzn_id=None, auth_headers=None):
-        if amzn_id:
+    def __init__(self, amzn_id=None, auth_headers=None, api_user=None):
+        if api_user:
+            user, key = api_user.split(":")
+            self.auth_headers = {'x-api-user': user, 'x-api-key': key}
+        elif auth_headers:
+            self.auth_headers = auth_headers
+        elif amzn_id:
             self.db = db()
             user = self.db.load(amzn_id + '-keys')
             if not user:
                 raise NotRegisteredException("Can't find user %s" % amzn_id)
             self.auth_headers = {'x-api-user': user['habitica_user'], 'x-api-key': user['habitica_key']}
-        elif auth_headers:
-            self.auth_headers = auth_headers
         else:
             raise Exception('need either amazon id or auth headers to create Habitica object')
 
@@ -134,14 +137,9 @@ def get_habitica(session):
     '''
     give me an alexa session, I"ll see if we have a linked account with Habitica
     '''
-    userid = session['user']['userId']
-    auth = session.get('attributes', {}).get('habitica_auth_header')
-    if auth:
-        print("in get_habitica we got cached auth")
-        return Habitica(auth_headers=auth)
-    else:
-        print("in get_habitica no cached auth")
-        return Habitica(userid)
+    # userid = session['user']['userId']
+    access_token = session['user']['accessToken']
+    return Habitica(api_user=access_token)
 
 
 def add_task(session, task, task_type='todo'):
