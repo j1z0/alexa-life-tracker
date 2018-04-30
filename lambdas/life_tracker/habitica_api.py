@@ -198,5 +198,4 @@ def match_task_with_habitica(task, session):
 
 def describe_user(session):
     habitica = get_habitica(session)
-    user = habitica.get_user_description()
-
+    return habitica.get_user_description()

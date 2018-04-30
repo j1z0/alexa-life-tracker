@@ -29,6 +29,8 @@ def on_intent(request, session):
         return end_session()
     elif intent_name == 'SayHello':
         return register_user(intent, session)
+    elif intent_name == 'UserStats':
+        return get_user_desc(intent, session)
     else:
         raise ValueError("Invalid intent")
 
@@ -78,7 +80,6 @@ def on_launch(launch_request, session):
     """ Called when the user launches the skill without specifying what they
     want
     """
-
     print("on_launch requestId=" + launch_request['requestId'] +
           ", sessionId=" + session['sessionId'])
     # Dispatch to your skill's launch
@@ -275,6 +276,20 @@ def complete_task(intent, session):
             elicit = elicit_slot('task', intent, speech_output, session_attributes)
             print(elicit)
             return elicit
+
+    return build_response(session_attributes, build_speechlet_response(
+        card_title, speech_output, reprompt_text, end_session, speech_type))
+
+
+def get_user_desc(intent, session):
+    ''' get a descr of the users awesomeness '''
+    card_title = "My Character"
+    session_attributes = {}
+    end_session = False
+    speech_type = 'PlainText'
+    reprompt_text = "Thanks for using Life Tracker.  May the force be with you."
+
+    speech_output = habitica_api.describe_user(session)
 
     return build_response(session_attributes, build_speechlet_response(
         card_title, speech_output, reprompt_text, end_session, speech_type))
