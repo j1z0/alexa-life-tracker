@@ -14,11 +14,23 @@ def test_get_todos(auth):
     habitica.get_todos()
 
 
+def test_get_user_avatar(auth):
+    habitica = Habitica(api_user=auth)
+    resp = habitica.get_user_avatar()
+    assert(not resp['success'])
+
+
 def test_get_tasks(auth):
     habitica = Habitica(api_user=auth)
     habitica.get_tasks()
     fuzz = habitica.get_tasks_simple()
     assert isinstance(fuzz, FuzzyDict)
+
+
+def test_get_level(auth):
+    habitica = Habitica(api_user=auth)
+    resp, task_type = habitica.get_tasks('level')
+    assert(task_type == 'level')
 
 
 def test_match_task_with_habitica(auth):

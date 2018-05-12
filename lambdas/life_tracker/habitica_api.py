@@ -6,6 +6,7 @@ API docs: https://habitica.com/apidoc/
 import requests
 from nodb import NoDB
 from fuzzy_dict import FuzzyDict
+import random
 
 
 def db():
@@ -24,7 +25,13 @@ BASE_HABITICA_URL = 'https://habitica.com/api/v3/'
 TASK_TYPES = FuzzyDict({'daily': 'dailys',
                         'todo': 'todos',
                         'reward': 'rewards',
-                        'habit': 'habits'
+                        'habit': 'habits',
+                        'stats': 'stats',
+                        'task': 'tasks',
+                        # 'avatar': 'stats',
+                        # 'character': 'stats',
+                        # 'pc': 'stats',
+                        'level': 'level',
                         })
 ADD_TASK_TYPES = FuzzyDict({'daily': 'daily',
                             'todo': 'todo',
@@ -50,6 +57,8 @@ class Habitica(object):
         else:
             raise Exception('need either amazon id or auth headers to create Habitica object')
 
+        self.uid = self.auth_headers['x-api-user']
+
     def get_tasks_simple(self, task_type=None):
         tasks_detail, _ = self.get_tasks(task_type)
         tasks = FuzzyDict()
@@ -64,7 +73,6 @@ class Habitica(object):
         return tasks
 
     def get_tasks(self, task_type=None):
-
         habitica_type = None
         try:
             if task_type:
@@ -72,8 +80,13 @@ class Habitica(object):
         except KeyError:
             pass
 
+        if habitica_type == 'stats':
+            return self.get_user_description(), habitica_type
+        if habitica_type == 'level':
+            return self.get_level_description(), habitica_type
+
         url = BASE_HABITICA_URL + 'tasks/user'
-        if habitica_type:
+        if habitica_type and not habitica_type.startswith('task'):
             url += '?type=%s' % habitica_type
 
         resp = requests.get(url, headers=self.auth_headers)
@@ -132,6 +145,17 @@ class Habitica(object):
         resp = requests.get(url, headers=self.auth_headers)
         return resp.json()
 
+    def get_level_description(self):
+        url = BASE_HABITICA_URL + 'user'
+        resp = requests.get(url, headers=self.auth_headers).json()['data']
+
+        desc = "You are a level %s %s. Next level in %s. " \
+               % (resp['stats']['lvl'], resp['stats']['class'], resp['stats']['toNextLevel'])
+        start = ['Go forth', 'Almost there', 'There you go', 'Your Rocking It']
+
+        desc = desc + random.choice(start) + ", track your tasks and build thy experience."
+        return desc
+
     def get_user_description(self):
         url = BASE_HABITICA_URL + 'user'
         resp = requests.get(url, headers=self.auth_headers).json()['data']
@@ -153,22 +177,32 @@ class Habitica(object):
                    'joinedGuild': inAch.get('joinedGuild', False)
                    }
         # Build a sentence
-        desc = "You are a quite handsome %s haired level %s %s." \
+        desc = "You are a quite handsome %s haired level %s %s. " \
                % (hair, stats['lvl'], stats['class'])
         if mount:
             desc = desc + " Currently riding a " + mount + "."
         else:
-            desc += "Currently unmounted."
+            desc += "Currently without a steed upon which to ride."
 
-        desc += " Your stats are impressive having %s H.P. %s experience, %s magic points, and %s gold." \
+        desc += " Your stats are impressive. %s H.P., %s experience, %s magic points, and %s gold." \
                 % (stats['hp'], stats['exp'], stats['mp'], stats['gp'])
 
         desc += " And you only need %s experience points to level up!" % stats['toNextLevel']
-        desc += " Plus on top of all that awesome, you've managed to complete "
-        desc += "%s quest, %s challenges, and had %s perfect days!  You Rock!" \
-                % (achieve['quests'], achieve['challenges'], achieve['perfect'])
+
+        if achieve['quests'] + achieve['challenges'] + achieve['perfect'] > 0:
+            desc += " Plus on top of all that awesome, you've managed to complete "
+            desc += "%s quest, %s challenges, and had %s perfect days!  You Rock!" \
+                    % (achieve['quests'], achieve['challenges'], achieve['perfect'])
         return desc
 
+    def get_user_avatar(self):
+
+        # TODO: this feature is currently broken on Habitica.com :(
+        # https://habitica.com/export/avatar-:uuid.png
+        url = BASE_HABITICA_URL + 'export/avatar-%s.png' % self.uid
+        data = requests.get(url, headers=self.auth_headers).json()
+        print(data)
+        return data
 
 
 def get_habitica(session):

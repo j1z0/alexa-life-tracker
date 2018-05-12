@@ -6,7 +6,7 @@ import habitica_api
 # --------------- response handlers -----------------
 
 
-def on_intent(request, session):
+def on_intent(request, session, screen=False):
     """ Called when the user specifies an intent for this skill """
 
     print("on_intent requestId=" + request['requestId'] +
@@ -29,8 +29,9 @@ def on_intent(request, session):
         return end_session()
     elif intent_name == 'SayHello':
         return register_user(intent, session)
-    elif intent_name == 'UserStats':
-        return get_user_desc(intent, session)
+    # TODO: this becomes part of list task
+    elif intent_name == 'ListUserStatsIntent':
+        return get_user_desc(intent, session, screen)
     else:
         raise ValueError("Invalid intent")
 
@@ -39,16 +40,20 @@ def register_user(intent, session):
     """ Called just before account linking """
 
     if not session['user'].get('accessToken'):
+
         # invite the user to link accounts
         session_attributes = {}
         card_title = "Link to Your Habitica Account"
         card_type = "LinkAccount"
-        speech_output = "Life Tracker links to your habitica to gamify your life. " + \
-                        "Use the companion app to link your account now. "
+        speech_output = "Welcome to Life Tracker.  You can use Life Tracker to complete tasks," + \
+                        " dailies and habbits while earning points, building skills and leveling" +\
+                        " up your virtual avatar on habitica dot com. To use this skill you need" +\
+                        " to link up your habitica account. Check the companion app now to link" + \
+                        " your account and start gamifing your life!"
         reprompt_text = ""
         should_end_session = False
         return build_response(session_attributes, build_speechlet_response(
-            card_title, speech_output, reprompt_text, should_end_session, card_type=card_type))
+            card_title, speech_output, speech_output, reprompt_text, should_end_session, card_type=card_type))
 
 
 def on_session_started(session_started_request, session):
@@ -83,6 +88,10 @@ def on_launch(launch_request, session):
     print("on_launch requestId=" + launch_request['requestId'] +
           ", sessionId=" + session['sessionId'])
     # Dispatch to your skill's launch
+
+    reg = register_user(None, session)
+    if reg:
+        return reg
     return get_welcome_response()
 
 
@@ -114,15 +123,16 @@ def get_welcome_response():
     # voice_line = 'https://s3.amazonaws.com/ask-soundlibrary/animals/amzn_sfx_bear_groan_roar_01.mp3'
     session_attributes = {}
     card_title = "Welcome"
-    speech_output = "<speak>Welcome to Life Tracker. " + \
-                    "Tell me what task you just finished by saying, " + \
-                    "Finished, and then the name of the task</speak>"
+    card_output = "Welcome to Life Tracker. " + \
+                  "Tell me what task you just finished by saying, " + \
+                  "Finished, and then the name of the task"
+    speech_output = "<speak>" + card_output + "</speak>"
     # If the user either does not reply to the welcome message or says something
     # that is not understood, they will be prompted again with this text.
     reprompt_text = "What task did you just finish? "
     should_end_session = False
     return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, should_end_session, "SSML"))
+        card_title, speech_output, card_output, reprompt_text, should_end_session, "SSML"))
 
 
 def task_attrib(task_name):
@@ -175,7 +185,7 @@ def add_task(intent, session):
         end_session = True
 
     return build_response(session_attributes, build_speechlet_response(
-                          card_title, speech_output, reprompt_text, end_session, speech_type))
+                          card_title, speech_output, speech_output, reprompt_text, end_session, speech_type))
 
 
 def list_tasks(intent, session):
@@ -183,6 +193,7 @@ def list_tasks(intent, session):
     session_attributes = {}
     end_session = True
     speech_type = 'PlainText'
+    reprompt_text = "Quest away and build thy character"
 
     # TODO: handle time requests...
 
@@ -204,17 +215,19 @@ def list_tasks(intent, session):
                         " add task name to my %s." % (spacer, type_word, type_word)
         end_session = False
         reprompt_text = "Did you want to add another todo?  Say add task name."
+    elif type_word in ['stats', 'level']:
+        speech_output = tasks
+        end_session = True
     else:
-        type_word = tasks[0]['type']
+        if not type_word.startswith('task'):
+            type_word = tasks[0]['type']
         type_word = type_word if type_word.endswith('s') else type_word + "'s"
         speech_output = "You have %s %s. " % (len(tasks), type_word)
 
         speech_output += combine_list_with_and(tasks, 6, start=True)
 
-        reprompt_text = "Quest away and build thy character"
-
     return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, end_session, speech_type))
+        card_title, speech_output, speech_output, reprompt_text, end_session, speech_type))
 
 
 def combine_list_with_and(seq, chunk_size, start=True):
@@ -237,6 +250,7 @@ def combine_list_with_and(seq, chunk_size, start=True):
 
 def complete_task(intent, session):
     card_title = intent['name']
+    card_output = None
     session_attributes = {}
     end_session = False
     speech_type = 'PlainText'
@@ -262,8 +276,8 @@ def complete_task(intent, session):
                     speech_output = positive_response(task, res)
                     # add points output
                     speech_type = "SSML"
-                    # speech_output = "Super.  You just completed your task " + task + \
-                    #                ".  Great work."
+                    card_output = "Super.  You just completed your task:\n " + task + \
+                                  ".\nGreat work."
                     # store to simple db
                     # update_taskdb(task, session['user']['userId'])
                     end_session = True
@@ -277,11 +291,13 @@ def complete_task(intent, session):
             print(elicit)
             return elicit
 
+    if card_output is None:
+        card_output = speech_output
     return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, end_session, speech_type))
+        card_title, speech_output, card_output, reprompt_text, end_session, speech_type))
 
 
-def get_user_desc(intent, session):
+def get_user_desc(intent, session, screen=False):
     ''' get a descr of the users awesomeness '''
     card_title = "My Character"
     session_attributes = {}
@@ -292,7 +308,36 @@ def get_user_desc(intent, session):
     speech_output = habitica_api.describe_user(session)
 
     return build_response(session_attributes, build_speechlet_response(
-        card_title, speech_output, reprompt_text, end_session, speech_type))
+        card_title, speech_output, speech_output, reprompt_text, end_session, speech_type))
+
+
+def screen_template(token, img=None, text1=None, text2=None, text3=None):
+    directives = [{
+      "type": "Display.RenderTemplate",
+      "template": {
+        "type": "BodyTemplate1",
+        "token": "string",
+        "backButton": "VISIBLE",
+        "backgroundImage": "Image",
+        "title": "string",
+        "textContent": {
+          "primaryText": {
+            "text": "string",
+            "type": "string"
+          },
+          "secondaryText": {
+            "text": "string",
+            "type": "string"
+          },
+          "tertiaryText": {
+            "text": "string",
+            "type": "string"
+          }
+        }
+      }
+    }
+    ]
+    print(directives)
 
 
 def end_session():
@@ -301,7 +346,7 @@ def end_session():
     # Setting this to true ends the session and exits the skill.
     should_end_session = True
     return build_response({}, build_speechlet_response(
-        card_title, speech_output, None, should_end_session))
+        card_title, speech_output, speech_output, None, should_end_session))
 
 
 # --------------- Helpers that build all of the responses ----------------------
@@ -322,11 +367,15 @@ def positive_response(task, task_res):
     congrats = '<say-as interpret-as="interjection">%s</say-as>' % random.choice(pos_words)
 
     # calc exp / gold
+    lvlup = ''
     if task_res['lvl_earned']:
         lvlup = '<say-as interpret-as="interjection">%s</say-as>. You leveled up! ' % random.choice(lvl_up_words)
     else:
-        lvlup = 'You gained %s gold pieces and %s experience! ' % (task_res['gold_earned'],
-                                                                   task_res['xp_earned'])
+        if (float(task_res['gold_earned']) > 0 and
+           int(task_res['gold_earned']) > 0):
+
+            lvlup = 'You gained %s gold pieces and %s experience! ' % (task_res['gold_earned'],
+                                                                       task_res['xp_earned'])
 
     speech_output = "<speak> " + congrats + ". You just completed your task " + task + \
                     ". " + lvlup + random.choice(final_word) + "</speak>"
@@ -371,18 +420,23 @@ def elicit_slot(slot, intent, speech_output, session, should_end_session=False):
     return build_response(session, speech_part)
 
 
-def build_speechlet_response(title, output, reprompt_text, should_end_session,
+def build_speechlet_response(title, speech_output, card_output, reprompt_text, should_end_session,
                              speech_type='PlainText', card_type='Simple'):
     text_keyword = 'text' if speech_type == 'PlainText' else 'ssml'
+    # TODO: largeImageUrl
     return {
         'outputSpeech': {
             'type': speech_type,
-            text_keyword: output,
+            text_keyword: speech_output,
         },
         'card': {
             'type': card_type,
-            'title': "SessionSpeechlet - " + title,
-            'content': "SessionSpeechlet - " + output
+            'title': title,
+            'content': card_output,
+            'image': {
+                'smallImageUrl': "https://j1z0.net/assets/img/lifeTracker-logo.png",
+                'largeImageUrl': "https://j1z0.net/assets/img/lifeTracker-logo.png"
+            }
         },
         'reprompt': {
             'outputSpeech': {
@@ -394,7 +448,7 @@ def build_speechlet_response(title, output, reprompt_text, should_end_session,
     }
 
 
-def build_response(session_attributes, speechlet_response=None):
+def build_response(session_attributes, speechlet_response=None, screen=None):
     retval = {
         'version': '1.0',
         'sessionAttributes': session_attributes,
@@ -452,15 +506,22 @@ def lambda_handler(event, context):
 
     # very start of coversation
 
+    screen = False
+    # TODO: this is awaiting user export from Habitica to be working again
+    # check for echo show:
+    # if event['context']['System']['device']['supportedInterfaces'].get('Display'):
+    #    screen = True
+
     if event['request']['type'] == "LaunchRequest":
         # does not require account linking
         return on_launch(event['request'], event['session'])
     elif event['request']['type'] == "SessionEndedRequest":
         return on_session_ended(event['request'], event['session'])
-    elif event['session']['new']:
-        print("in session.new")
-        res = on_session_started({'requestId': event['request']['requestId']},
-                           event['session'])
-        if res: return res
+
+    res = on_session_started({'requestId': event['request']['requestId']},
+                             event['session'])
+    if res:
+        return res
+
     if event['request']['type'] == "IntentRequest":
-        return on_intent(event['request'], event['session'])
+        return on_intent(event['request'], event['session'], screen)

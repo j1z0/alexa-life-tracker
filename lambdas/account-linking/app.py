@@ -144,10 +144,10 @@ body {
       <input type="text" name="apitoken" class="form-control" placeholder="API Token on Habitica" required>
       <div class="checkbox mb-3">
         <label>
-					<span> You can find your <a href="https://habitica.com/user/settings/api" >Habitica API Key here</a></span>
+					<span> You can find your <a href="https://habitica.com/user/settings/api" target="_blank" >Habitica API Key here</a></span>
                     <span></span>
 					<span> Don't have an account?</span>
-		   <span><a href="https://habitica.com/static/home" >Sign up for Habitica</a></span>
+		   <span><a href="https://habitica.com/static/home" target="_blank" >Sign up for Habitica</a></span>
         </label>
       </div>
 			<input type="hidden" name="state" value="{{state}}">
@@ -234,10 +234,11 @@ body {
       <input type="text" name="apitoken" class="form-control" placeholder="API Token on Habitica" required>
       <div class="checkbox mb-3">
         <label>
-					<span> You can find your <a href="https://habitica.com/user/settings/api" >Habitica API Key here</a></span>
+					<span> You can find your <a href="https://habitica.com/user/settings/api"
+                    target="_blank" >Habitica API Key here</a></span>
                     <span></span>
 					<span> Don't have an account?</span>
-		   <span><a href="https://habitica.com/static/home" >Sign up for Habitica</a></span>
+		   <span><a href="https://habitica.com/static/home" target="_blank" >Sign up for Habitica</a></span>
         </label>
       </div>
 			<input type="hidden" name="state" value="{{state}}">
