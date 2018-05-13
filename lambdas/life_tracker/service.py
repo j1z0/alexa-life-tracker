@@ -51,7 +51,7 @@ def register_user(intent, session):
                         " to link up your habitica account. Check the companion app now to link" + \
                         " your account and start gamifing your life!"
         reprompt_text = ""
-        should_end_session = False
+        should_end_session = True
         return build_response(session_attributes, build_speechlet_response(
             card_title, speech_output, speech_output, reprompt_text, should_end_session, card_type=card_type))
 
@@ -146,7 +146,7 @@ def add_task(intent, session):
             object.name - my husband's birthday
             targetCollection.type - calendar
     '''
-    card_title = intent['name']
+    card_title = "Add Task"
     session_attributes = {}
     end_session = True
     speech_type = 'PlainText'
@@ -189,7 +189,7 @@ def add_task(intent, session):
 
 
 def list_tasks(intent, session):
-    card_title = intent['name']
+    card_title = "List of Tasks"
     session_attributes = {}
     end_session = True
     speech_type = 'PlainText'
@@ -219,7 +219,10 @@ def list_tasks(intent, session):
         speech_output = tasks
         end_session = True
     else:
-        if not type_word.startswith('task'):
+        if type_word is None:
+            # handle the case where slot isn't filled
+            type_word = "tasks"
+        elif type_word and not type_word.startswith('task'):
             type_word = tasks[0]['type']
         type_word = type_word if type_word.endswith('s') else type_word + "'s"
         speech_output = "You have %s %s. " % (len(tasks), type_word)
@@ -249,7 +252,7 @@ def combine_list_with_and(seq, chunk_size, start=True):
 
 
 def complete_task(intent, session):
-    card_title = intent['name']
+    card_title = "Task Completed"
     card_output = None
     session_attributes = {}
     end_session = False

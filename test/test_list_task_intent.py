@@ -75,8 +75,23 @@ def list_task_request():
     }
 
 
+@pytest.fixture()
+def list_task_request_no_slots(list_task_request):
+    req = list_task_request.copy()
+    req['request']['intent']['slots']['task_type'].pop('value')
+    req['request']['intent']['slots']['list_word'].pop('value')
+    return req
+
+
 def test_list_tasks(list_task_request):
     res = lambda_handler(list_task_request, None)
+    speech = res['response']['outputSpeech']['text']
+    print(res)
+    assert re.match('You have.\d+.tasks', speech)
+
+
+def test_list_tasks_no_slots_should_default_to_tasks(list_task_request_no_slots):
+    res = lambda_handler(list_task_request_no_slots, None)
     speech = res['response']['outputSpeech']['text']
     print(res)
     assert re.match('You have.\d+.tasks', speech)
